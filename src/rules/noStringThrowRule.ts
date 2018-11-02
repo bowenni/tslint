@@ -54,12 +54,12 @@ export class Rule extends Lint.Rules.AbstractRule {
         `,
         codeExamples,
         type: "functionality",
-        typescriptOnly: false,
+        typescriptOnly: false
     };
     /* tslint:enable:object-literal-sort-keys */
 
     public static FAILURE_STRING =
-            "Throwing plain strings (not instances of Error) gives no stack traces";
+        "Throwing plain strings (not instances of Error) gives no stack traces";
 
     public apply(sourceFile: ts.SourceFile): Lint.RuleFailure[] {
         return this.applyWithFunction(sourceFile, walk);
@@ -71,10 +71,10 @@ function walk(ctx: Lint.WalkContext<void>): void {
     return ts.forEachChild(ctx.sourceFile, function cb(node: ts.Node): void {
         if (isThrowStatement(node)) {
             const { expression } = node;
-            if (isString(expression)) {
+            if (expression && isString(expression)) {
                 ctx.addFailureAtNode(node, Rule.FAILURE_STRING, [
                     Lint.Replacement.appendText(expression.getStart(sourceFile), "new Error("),
-                    Lint.Replacement.appendText(expression.getEnd(), ")"),
+                    Lint.Replacement.appendText(expression.getEnd(), ")")
                 ]);
             }
         }
@@ -90,7 +90,10 @@ function isString(node: ts.Node): boolean {
             return true;
         case ts.SyntaxKind.BinaryExpression: {
             const { operatorToken, left, right } = node as ts.BinaryExpression;
-            return operatorToken.kind === ts.SyntaxKind.PlusToken && (isString(left) || isString(right));
+            return (
+                operatorToken.kind === ts.SyntaxKind.PlusToken &&
+                (isString(left) || isString(right))
+            );
         }
         case ts.SyntaxKind.ParenthesizedExpression:
             return isString((node as ts.ParenthesizedExpression).expression);
